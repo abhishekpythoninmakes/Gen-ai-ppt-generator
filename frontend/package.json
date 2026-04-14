@@ -1,0 +1,35 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tiptap/extension-color": "^3.22.2",
+    "@tiptap/extension-font-family": "^3.22.2",
+    "@tiptap/extension-highlight": "^3.22.2",
+    "@tiptap/extension-placeholder": "^3.22.2",
+    "@tiptap/extension-text-align": "^3.22.2",
+    "@tiptap/extension-text-style": "^3.22.2",
+    "@tiptap/extension-underline": "^3.22.2",
+    "@tiptap/starter-kit": "^3.22.2",
+    "@tiptap/vue-3": "^3.22.2",
+    "@vueuse/core": "^14.2.1",
+    "axios": "^1.14.0",
+    "fabric": "^5.3.0",
+    "pinia": "^3.0.4",
+    "pptxgenjs": "^4.0.1",
+    "vue": "^3.5.30",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.1"
+  }
+}

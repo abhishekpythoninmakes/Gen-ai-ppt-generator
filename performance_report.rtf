@@ -1,0 +1,67 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}}
+\fs24
+\b Performance and Server Requirements Report\b0\par
+Project: AI_PPT_GENERATOR\par
+Date: 2026-04-06\par
+\par
+\b 1. Executive Summary\b0\par
+This project generates presentations by calling external APIs (Groq LLM, Pexels/Unsplash) and then builds PPTX files locally using python-pptx. As implemented, GPU is not used by the application code. Most latency is dominated by remote API response time and network latency. Local CPU work is limited to JSON processing, image download/decoding, and PPTX assembly.\par
+\par
+\b 2. What Runs on CPU vs GPU\b0\par
+- CPU (local): FastAPI request handling, JSON parsing, image download/decoding, PPTX generation, database IO.\par
+- GPU (local): Not used by code. If the LLM is external (Groq), inference happens remotely.\par
+- External services: Groq LLM API, Pexels/Unsplash image search APIs.\par
+\par
+\b 3. Local End-to-End Benchmark Results (LLM + Image Search + PPTX Export)\b0\par
+Environment: local sandbox with outbound network; Groq/Pexels/Unsplash keys configured.\par
+Trials: 2 per slide count. Prompt: "quarterly performance" (fixed).\par
+Export step includes image downloads from returned URLs.\par
+\par
+Slides | LLM med s | Img med s | Export med s | Total med s | Total s/slide\par
+     4 |     1.584 |     1.210 |        1.972 |       4.767 |          1.192\par
+     6 |     2.137 |     1.162 |        1.401 |       4.700 |          0.783\par
+     8 |     2.250 |     1.113 |        2.629 |       5.991 |          0.749\par
+\par
+\b Notes on Variance\b0\par
+LLM and image APIs are network-bound, so timings vary by provider latency and network conditions. Export time varies with image sizes and download speed.\par
+\par
+\b 4. Local Benchmark Results (PPTX Export Only)\b0\par
+These results measure only PPTX assembly using python-pptx (text boxes only). They do NOT include LLM response time, image search/download time, or network latency.\par
+\par
+Slides | Median ms | Min ms | Max ms | Median ms/slide\par
+     4 |    12.170 | 12.153 | 14.865 |         3.042\par
+     6 |    14.778 | 13.497 | 16.619 |         2.463\par
+     8 |    15.049 | 14.968 | 15.973 |         1.881\par
+    10 |    18.132 | 17.072 | 21.506 |         1.813\par
+    12 |    20.722 | 19.884 | 27.697 |         1.727\par
+\par
+\b 5. Server Requirements (Current Implementation)\b0\par
+\b Software\b0\par
+- Backend: Python 3.10+ with FastAPI, httpx, python-pptx.\par
+- Frontend: Node.js 18+ (Vite/Vue).\par
+- Database: SQLite by default (DATABASE_URL=sqlite:///./ppt_generator.db).\par
+- External API keys: GROQ_API_KEY, PEXELS_API_KEY, UNSPLASH_ACCESS_KEY.\par
+- Outbound HTTPS access required.\par
+\par
+\b Hardware (Guidance)\b0\par
+Because LLM and image generation are external, local CPU/RAM requirements are modest. Actual sizing depends on concurrent users and export volume.\par
+- vCPU: 2-4 for low traffic (scale with concurrency)\par
+- RAM: 4-8 GB for low traffic\par
+- Disk: depends on number of presentations and cached media\par
+- Network: reliable outbound HTTPS with low latency\par
+\par
+\b 6. CPU-Only Processing Details\b0\par
+- CPU handles request routing, JSON serialization, image download and decoding, and PPTX packaging.\par
+- CPU load increases with concurrency and number of images per slide.\par
+- GPU is not required unless you add local inference.\par
+\par
+\b 7. Observability Checklist\b0\par
+- Log LLM request latency (Groq)\par
+- Log image search latency (Pexels/Unsplash)\par
+- Log PPTX export time\par
+- Monitor CPU, memory, and response codes\par
+\par
+\b 8. Notes\b0\par
+This report reflects the current codebase where generation uses remote APIs. If you move inference on-prem or add GPU-accelerated steps, update this report with new benchmarks.\par
+}
