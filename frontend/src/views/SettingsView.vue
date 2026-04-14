@@ -3,7 +3,7 @@
     <div class="settings-container animate-fade-in">
       <div class="settings-header">
         <h1>Settings</h1>
-        <p>Configure your API keys and AI model for generation</p>
+        <p>Configure your OpenAI and image provider keys for generation</p>
       </div>
 
       <LoadingSpinner v-if="loading" text="Loading settings..." />
@@ -14,14 +14,9 @@
           <div class="section-icon" style="background: linear-gradient(135deg, #a855f7, #6366f1)">🧠</div>
           <div class="section-body">
             <h3>AI Model <span class="tag tag-model">Active</span></h3>
-            <p>Choose which AI model to use for generating presentations. Different models have different capabilities and speeds.</p>
+            <p>Choose which OpenAI model to use for generating presentations. Different models balance quality, speed, and cost differently.</p>
             <div class="model-select-wrapper">
               <select id="llm-model" v-model="form.selected_llm_model" class="input-field model-select">
-                <optgroup label="── Groq (Fast & Free) ──">
-                  <option value="groq/llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
-                  <option value="groq/llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
-                  <option value="groq/mixtral-8x7b-32768">Mixtral 8x7B</option>
-                </optgroup>
                 <optgroup label="── OpenAI ──">
                   <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
                   <option value="openai/gpt-4">GPT-4</option>
@@ -39,9 +34,7 @@
                   <option value="openai/gpt-5.4-nano">GPT-5.4 Nano</option>
                 </optgroup>
               </select>
-              <div class="model-badge" :class="modelProvider">
-                {{ modelProvider === 'openai' ? 'OpenAI' : 'Groq' }}
-              </div>
+              <div class="model-badge openai">OpenAI</div>
             </div>
           </div>
         </div>
@@ -50,7 +43,7 @@
         <div class="settings-section">
           <div class="section-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4)">🔑</div>
           <div class="section-body">
-            <h3>OpenAI API Key <span v-if="modelProvider === 'openai'" class="tag">Required</span></h3>
+            <h3>OpenAI API Key <span class="tag">Required</span></h3>
             <p>Required when using OpenAI models (GPT series). Get your key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></p>
             <input
               id="openai-key"
@@ -58,23 +51,6 @@
               type="password"
               class="input-field"
               placeholder="sk-..."
-              autocomplete="off"
-            />
-          </div>
-        </div>
-
-        <!-- Groq API Key -->
-        <div class="settings-section">
-          <div class="section-icon" style="background: linear-gradient(135deg, #6c63ff, #b06cff)">🤖</div>
-          <div class="section-body">
-            <h3>Groq API Key <span v-if="modelProvider === 'groq'" class="tag">Required</span></h3>
-            <p>Required when using Groq models (Llama, Mixtral). Get your key from <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a></p>
-            <input
-              id="groq-key"
-              v-model="form.groq_api_key"
-              type="password"
-              class="input-field"
-              placeholder="gsk_..."
               autocomplete="off"
             />
           </div>
@@ -278,8 +254,8 @@
               <tbody>
                 <tr v-for="row in usageSummary.by_model" :key="row.model" class="table-row-anim">
                   <td>
-                    <span class="model-name-badge" :class="row.model.includes('openai') || row.model.includes('gpt') ? 'openai' : 'groq'">
-                      {{ row.model.replace('openai/', '').replace('groq/', '') }}
+                    <span class="model-name-badge openai">
+                      {{ row.model.replace('openai/', '') }}
                     </span>
                   </td>
                   <td>{{ row.count }}</td>
@@ -299,12 +275,12 @@
 
       <div class="info-box glass">
         <h4>📌 How It Works</h4>
-        <p>Select your preferred AI model from the dropdown above. The system will use the corresponding API key:</p>
+        <p>Select your preferred OpenAI model from the dropdown above. The system uses your OpenAI API key for all presentation and template generation.</p>
         <ol>
-          <li><strong>Groq models</strong> — Uses your Groq API key (fast, free tier available)</li>
-          <li><strong>OpenAI models</strong> — Uses your OpenAI API key (paid, high quality)</li>
+          <li><strong>OpenAI models</strong> — Uses your OpenAI API key for slide and template generation</li>
+          <li><strong>Images</strong> — Fetched using Pexels first, then Unsplash as fallback</li>
         </ol>
-        <p>Images are fetched using Pexels (primary) → Unsplash (fallback) → Placeholder (final fallback).</p>
+        <p>If image providers are not configured, the app still falls back gracefully to placeholder assets when needed.</p>
       </div>
     </div>
   </div>
@@ -320,16 +296,11 @@ const saving = ref(false)
 const error = ref('')
 
 const form = reactive({
-  groq_api_key: '',
   openai_api_key: '',
-  selected_llm_model: 'groq/llama-3.3-70b-versatile',
+  selected_llm_model: 'openai/gpt-4o-mini',
   pexels_api_key: '',
   unsplash_access_key: '',
   unsplash_secret_key: '',
-})
-
-const modelProvider = computed(() => {
-  return form.selected_llm_model?.startsWith('openai/') ? 'openai' : 'groq'
 })
 
 // ─── Usage state ────────────────────────────────────
@@ -367,7 +338,7 @@ const recentGenerations = computed(() => {
       cost_usd: cost,
       tokensPct: tokens / maxTokens,
       dateLabel: created ? created.toLocaleDateString() : '',
-      modelLabel: (i.model || '').replace('openai/', '').replace('groq/', ''),
+      modelLabel: (i.model || '').replace('openai/', ''),
     }
   })
 })
@@ -380,7 +351,7 @@ const usageLogRows = computed(() => {
     .map(i => {
       const created = i.created_at ? new Date(i.created_at) : null
       const jobType = (i.job_type || 'ppt').toLowerCase()
-      const modelRaw = (i.model || '').replace('openai/', '').replace('groq/', '')
+      const modelRaw = (i.model || '').replace('openai/', '')
       return {
         id: i.id,
         job_type: jobType,
@@ -660,12 +631,6 @@ async function handleSave() {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.model-badge.groq {
-  background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(176, 108, 255, 0.2));
-  color: #b06cff;
-  border: 1px solid rgba(176, 108, 255, 0.3);
 }
 
 .key-group {
@@ -1027,11 +992,6 @@ async function handleSave() {
 .model-name-badge.openai {
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
-}
-
-.model-name-badge.groq {
-  background: rgba(176, 108, 255, 0.12);
-  color: #b06cff;
 }
 
 .job-type-badge {

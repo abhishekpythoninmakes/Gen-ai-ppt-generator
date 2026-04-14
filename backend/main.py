@@ -5,6 +5,7 @@ from routers import auth_router, ppt_router, settings_router, export_router, adm
 from sqlalchemy import text
 from models import User, UserSettings
 from auth import hash_password
+from config import DEFAULT_OPENAI_MODEL
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -31,8 +32,19 @@ def _ensure_settings_columns():
             conn.execute(text("ALTER TABLE user_settings ADD COLUMN openai_api_key VARCHAR(500) DEFAULT ''"))
             conn.commit()
         if "selected_llm_model" not in cols:
-            conn.execute(text("ALTER TABLE user_settings ADD COLUMN selected_llm_model VARCHAR(100) DEFAULT 'groq/llama-3.3-70b-versatile'"))
+            conn.execute(text(f"ALTER TABLE user_settings ADD COLUMN selected_llm_model VARCHAR(100) DEFAULT '{DEFAULT_OPENAI_MODEL}'"))
             conn.commit()
+        conn.execute(
+            text(
+                "UPDATE user_settings "
+                "SET selected_llm_model = :default_model "
+                "WHERE selected_llm_model IS NULL "
+                "OR TRIM(selected_llm_model) = '' "
+                "OR selected_llm_model NOT LIKE 'openai/%'"
+            ),
+            {"default_model": DEFAULT_OPENAI_MODEL},
+        )
+        conn.commit()
 
 
 def _ensure_generation_job_columns():

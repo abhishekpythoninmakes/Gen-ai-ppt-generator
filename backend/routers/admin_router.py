@@ -39,7 +39,7 @@ class AssetCreateRequest(BaseModel):
     asset_type: str = "image"
 
 from auth import get_current_user, hash_password
-from config import SECRET_KEY, ALGORITHM
+from config import SECRET_KEY, ALGORITHM, DEFAULT_OPENAI_MODEL
 from services.llm_service import generate_template_content
 from services.auto_design_service import apply_auto_design
 from services.asset_match_service import find_best_asset_url
@@ -185,9 +185,8 @@ async def _run_template_generation(job_id: int, user_id: int):
         })
 
         settings = db.query(UserSettings).filter(UserSettings.user_id == user_id).first()
-        groq_key = settings.groq_api_key if settings else ""
         openai_key = settings.openai_api_key if settings else ""
-        selected_model = settings.selected_llm_model if settings else "groq/llama-3.3-70b-versatile"
+        selected_model = settings.selected_llm_model if settings else DEFAULT_OPENAI_MODEL
         pexels_key = settings.pexels_api_key if settings else ""
         unsplash_key = settings.unsplash_access_key if settings else ""
         requested_slide_count = int(job.num_slides or 6)
@@ -256,7 +255,6 @@ async def _run_template_generation(job_id: int, user_id: int):
                 generate_template_content(
                     prompt=job.prompt,
                     num_slides=requested_slide_count,
-                    groq_key=groq_key,
                     openai_key=openai_key,
                     model=selected_model,
                     slide_width=job.slide_width or 960,

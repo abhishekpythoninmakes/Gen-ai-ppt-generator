@@ -5,6 +5,7 @@ from models import User, UserSettings, TokenUsage, GenerationJob
 from schemas import SettingsRequest, SettingsResponse, TokenUsageResponse, UsageSummaryResponse
 from auth import get_current_user
 from datetime import datetime, timedelta, timezone
+from config import DEFAULT_OPENAI_MODEL
 
 router = APIRouter(prefix="/api/settings", tags=["Settings"])
 
@@ -22,6 +23,17 @@ def _as_utc(dt: datetime | None) -> datetime | None:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+def _normalize_model(model: str | None) -> str:
+    value = (model or "").strip()
+    if not value:
+        return DEFAULT_OPENAI_MODEL
+    if value.startswith("openai/"):
+        return value
+    if any(value.startswith(prefix) for prefix in ("gpt-", "o1", "o3")):
+        return f"openai/{value}"
+    return DEFAULT_OPENAI_MODEL
 
 
 def _collect_usage_records(db: Session, user_id: int) -> list[dict]:
@@ -101,15 +113,14 @@ def get_settings(
 ):
     settings = db.query(UserSettings).filter(UserSettings.user_id == current_user.id).first()
     if not settings:
-        settings = UserSettings(user_id=current_user.id)
+        settings = UserSettings(user_id=current_user.id, selected_llm_model=DEFAULT_OPENAI_MODEL)
         db.add(settings)
         db.commit()
         db.refresh(settings)
 
     return SettingsResponse(
-        groq_api_key=_mask_key(settings.groq_api_key or ""),
         openai_api_key=_mask_key(settings.openai_api_key or ""),
-        selected_llm_model=settings.selected_llm_model or "groq/llama-3.3-70b-versatile",
+        selected_llm_model=_normalize_model(settings.selected_llm_model),
         pexels_api_key=_mask_key(settings.pexels_api_key or ""),
         unsplash_access_key=_mask_key(settings.unsplash_access_key or ""),
         unsplash_secret_key=_mask_key(settings.unsplash_secret_key or ""),
@@ -124,15 +135,13 @@ def update_settings(
 ):
     settings = db.query(UserSettings).filter(UserSettings.user_id == current_user.id).first()
     if not settings:
-        settings = UserSettings(user_id=current_user.id)
+        settings = UserSettings(user_id=current_user.id, selected_llm_model=DEFAULT_OPENAI_MODEL)
         db.add(settings)
 
-    if req.groq_api_key is not None and "•" not in (req.groq_api_key or ""):
-        settings.groq_api_key = req.groq_api_key.strip()
     if req.openai_api_key is not None and "•" not in (req.openai_api_key or ""):
         settings.openai_api_key = req.openai_api_key.strip()
     if req.selected_llm_model is not None:
-        settings.selected_llm_model = req.selected_llm_model.strip()
+        settings.selected_llm_model = _normalize_model(req.selected_llm_model)
     if req.pexels_api_key is not None and "•" not in (req.pexels_api_key or ""):
         settings.pexels_api_key = req.pexels_api_key.strip()
     if req.unsplash_access_key is not None and "•" not in (req.unsplash_access_key or ""):
@@ -144,9 +153,8 @@ def update_settings(
     db.refresh(settings)
 
     return SettingsResponse(
-        groq_api_key=_mask_key(settings.groq_api_key or ""),
         openai_api_key=_mask_key(settings.openai_api_key or ""),
-        selected_llm_model=settings.selected_llm_model or "groq/llama-3.3-70b-versatile",
+        selected_llm_model=_normalize_model(settings.selected_llm_model),
         pexels_api_key=_mask_key(settings.pexels_api_key or ""),
         unsplash_access_key=_mask_key(settings.unsplash_access_key or ""),
         unsplash_secret_key=_mask_key(settings.unsplash_secret_key or ""),

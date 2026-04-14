@@ -130,7 +130,7 @@ def main():
     r = client.get("/api/settings", headers=headers)
     test("GET /settings returns 200", r.status_code == 200)
     sdata = r.json()
-    test("Has groq_api_key field", "groq_api_key" in sdata)
+    test("Has openai_api_key field", "openai_api_key" in sdata)
     test("Has pexels_api_key field", "pexels_api_key" in sdata)
     test("Has unsplash_access_key field", "unsplash_access_key" in sdata)
     test("Has unsplash_secret_key field", "unsplash_secret_key" in sdata)
@@ -138,14 +138,14 @@ def main():
 
     # Update settings
     r = client.post("/api/settings", headers=headers, json={
-        "groq_api_key": "groq_test_key_for_local_api_checks_only",
+        "openai_api_key": "openai_test_key_for_local_api_checks_only",
         "pexels_api_key": "pexels_test_key_for_local_api_checks_only",
         "unsplash_access_key": "unsplash_access_1234567890",
         "unsplash_secret_key": "unsplash_secret_1234567890",
     })
     test("POST /settings returns 200", r.status_code == 200)
     sdata = r.json()
-    test("Groq key is masked", "•" in sdata.get("groq_api_key", ""))
+    test("OpenAI key is masked", "•" in sdata.get("openai_api_key", ""))
     test("Pexels key is masked", "•" in sdata.get("pexels_api_key", ""))
     test("Unsplash access key is masked", "•" in sdata.get("unsplash_access_key", ""))
 
@@ -153,7 +153,7 @@ def main():
     r = client.post("/api/settings", headers=headers, json=sdata)
     test("Sending masked keys back doesn't corrupt stored keys", r.status_code == 200)
     sdata2 = r.json()
-    test("Keys still masked after re-save", "•" in sdata2.get("groq_api_key", ""))
+    test("Keys still masked after re-save", "•" in sdata2.get("openai_api_key", ""))
 
     # ─── 6. Blank PPT ────────────────────────────────
     print("\n🔹 6. Blank PPT Creation")

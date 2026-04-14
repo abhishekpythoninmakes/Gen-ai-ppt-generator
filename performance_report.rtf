@@ -6,15 +6,15 @@ Project: AI_PPT_GENERATOR\par
 Date: 2026-04-06\par
 \par
 \b 1. Executive Summary\b0\par
-This project generates presentations by calling external APIs (Groq LLM, Pexels/Unsplash) and then builds PPTX files locally using python-pptx. As implemented, GPU is not used by the application code. Most latency is dominated by remote API response time and network latency. Local CPU work is limited to JSON processing, image download/decoding, and PPTX assembly.\par
+This project generates presentations by calling external APIs (OpenAI LLM, Pexels/Unsplash) and then builds PPTX files locally using python-pptx. As implemented, GPU is not used by the application code. Most latency is dominated by remote API response time and network latency. Local CPU work is limited to JSON processing, image download/decoding, and PPTX assembly.\par
 \par
 \b 2. What Runs on CPU vs GPU\b0\par
 - CPU (local): FastAPI request handling, JSON parsing, image download/decoding, PPTX generation, database IO.\par
-- GPU (local): Not used by code. If the LLM is external (Groq), inference happens remotely.\par
-- External services: Groq LLM API, Pexels/Unsplash image search APIs.\par
+- GPU (local): Not used by code. If the LLM is external (OpenAI), inference happens remotely.\par
+- External services: OpenAI LLM API, Pexels/Unsplash image search APIs.\par
 \par
 \b 3. Local End-to-End Benchmark Results (LLM + Image Search + PPTX Export)\b0\par
-Environment: local sandbox with outbound network; Groq/Pexels/Unsplash keys configured.\par
+Environment: local sandbox with outbound network; OpenAI/Pexels/Unsplash keys configured.\par
 Trials: 2 per slide count. Prompt: "quarterly performance" (fixed).\par
 Export step includes image downloads from returned URLs.\par
 \par
@@ -41,7 +41,7 @@ Slides | Median ms | Min ms | Max ms | Median ms/slide\par
 - Backend: Python 3.10+ with FastAPI, httpx, python-pptx.\par
 - Frontend: Node.js 18+ (Vite/Vue).\par
 - Database: SQLite by default (DATABASE_URL=sqlite:///./ppt_generator.db).\par
-- External API keys: GROQ_API_KEY, PEXELS_API_KEY, UNSPLASH_ACCESS_KEY.\par
+- External API keys: OPENAI_API_KEY, PEXELS_API_KEY, UNSPLASH_ACCESS_KEY.\par
 - Outbound HTTPS access required.\par
 \par
 \b Hardware (Guidance)\b0\par
@@ -57,7 +57,7 @@ Because LLM and image generation are external, local CPU/RAM requirements are mo
 - GPU is not required unless you add local inference.\par
 \par
 \b 7. Observability Checklist\b0\par
-- Log LLM request latency (Groq)\par
+- Log LLM request latency (OpenAI)\par
 - Log image search latency (Pexels/Unsplash)\par
 - Log PPTX export time\par
 - Monitor CPU, memory, and response codes\par

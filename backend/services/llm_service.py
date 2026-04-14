@@ -1,5 +1,5 @@
 """
-Unified LLM service using LiteLLM — supports OpenAI, Groq, and future providers.
+Unified LLM service using LiteLLM for OpenAI models.
 Returns structured JSON slide content + token usage metadata.
 
 Features:
@@ -17,7 +17,7 @@ import random
 import logging
 from typing import Awaitable, Callable, Any
 import litellm
-from config import DEFAULT_GROQ_API_KEY, DEFAULT_OPENAI_API_KEY
+from config import DEFAULT_OPENAI_API_KEY, DEFAULT_OPENAI_MODEL
 
 logger = logging.getLogger(__name__)
 
@@ -44,48 +44,33 @@ MODEL_PRICING = {
 
 def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
     """Calculate USD cost from token counts using the pricing table."""
-    # Strip provider prefix
-    clean = model.replace("openai/", "").replace("groq/", "").strip()
+    clean = model.replace("openai/", "").strip()
     pricing = MODEL_PRICING.get(clean)
     if not pricing:
-        return 0.0  # Free (Groq) or unknown model
+        return 0.0
     input_cost = (prompt_tokens / 1_000_000) * pricing["input"]
     output_cost = (completion_tokens / 1_000_000) * pricing["output"]
     return round(input_cost + output_cost, 6)
 
 
-def _resolve_model_and_key(model: str, groq_key: str = "", openai_key: str = "") -> tuple[str, str]:
+def _normalize_model(model: str) -> str:
+    value = (model or "").strip()
+    if not value:
+        return DEFAULT_OPENAI_MODEL
+    if value.startswith("openai/"):
+        return value
+    if any(value.startswith(prefix) for prefix in ("gpt-", "o1", "o3")):
+        return f"openai/{value}"
+    return DEFAULT_OPENAI_MODEL
+
+
+def _resolve_model_and_key(model: str, openai_key: str = "") -> tuple[str, str]:
     """Resolve the litellm model string and API key based on the selected model."""
-    model = (model or "groq/llama-3.3-70b-versatile").strip()
-
-    if model.startswith("openai/"):
-        key = (openai_key or DEFAULT_OPENAI_API_KEY).strip()
-        if not key:
-            raise ValueError("OpenAI API key not configured. Please set it in Settings.")
-        return model, key
-
-    if model.startswith("groq/"):
-        key = (groq_key or DEFAULT_GROQ_API_KEY).strip()
-        if not key:
-            raise ValueError("Groq API key not configured. Please set it in Settings.")
-        return model, key
-
-    if any(model.startswith(p) for p in ("gpt-", "o1", "o3")):
-        key = (openai_key or DEFAULT_OPENAI_API_KEY).strip()
-        if not key:
-            raise ValueError("OpenAI API key not configured. Please set it in Settings.")
-        return f"openai/{model}", key
-
-    if any(model.startswith(p) for p in ("llama", "mixtral", "gemma")):
-        key = (groq_key or DEFAULT_GROQ_API_KEY).strip()
-        if not key:
-            raise ValueError("Groq API key not configured. Please set it in Settings.")
-        return f"groq/{model}", key
-
-    key = (groq_key or DEFAULT_GROQ_API_KEY).strip()
+    model = _normalize_model(model)
+    key = (openai_key or DEFAULT_OPENAI_API_KEY).strip()
     if not key:
-        raise ValueError("LLM API key not configured. Please set it in Settings.")
-    return f"groq/{model}", key
+        raise ValueError("OpenAI API key not configured. Please set it in Settings.")
+    return model, key
 
 
 def _parse_json_response(content: str) -> dict:
@@ -767,16 +752,15 @@ async def _generate_content_streaming(
 async def generate_ppt_content(
     prompt: str,
     num_slides: int = 6,
-    groq_key: str = "",
     openai_key: str = "",
-    model: str = "groq/llama-3.3-70b-versatile",
+    model: str = DEFAULT_OPENAI_MODEL,
     slide_width: int = 960,
     slide_height: int = 540,
     feedback_rules: str = "",
     on_partial_slide: Callable[[int, dict], Awaitable[None]] | None = None,
 ) -> tuple[dict, dict]:
     """Generate structured PPT content. Returns (content_dict, usage_dict)."""
-    litellm_model, api_key = _resolve_model_and_key(model, groq_key, openai_key)
+    litellm_model, api_key = _resolve_model_and_key(model, openai_key)
     logger.info(f"Generating PPT content with model: {litellm_model}")
 
     # Analyze prompt context
@@ -849,16 +833,15 @@ async def generate_ppt_content(
 async def generate_template_content(
     prompt: str,
     num_slides: int = 6,
-    groq_key: str = "",
     openai_key: str = "",
-    model: str = "groq/llama-3.3-70b-versatile",
+    model: str = DEFAULT_OPENAI_MODEL,
     slide_width: int = 960,
     slide_height: int = 540,
     feedback_rules: str = "",
     on_partial_slide: Callable[[int, dict], Awaitable[None]] | None = None,
 ) -> tuple[dict, dict]:
     """Generate structured template content. Returns (content_dict, usage_dict)."""
-    litellm_model, api_key = _resolve_model_and_key(model, groq_key, openai_key)
+    litellm_model, api_key = _resolve_model_and_key(model, openai_key)
     logger.info(f"Generating template content with model: {litellm_model}")
 
     # Analyze prompt context

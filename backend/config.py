@@ -32,8 +32,8 @@ def _resolve_database_url() -> str:
 DATABASE_URL = _resolve_database_url()
 
 # Default API keys (can be overridden per-user via settings)
-DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 DEFAULT_OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL", "openai/gpt-4o-mini")
 DEFAULT_PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 DEFAULT_UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY", "")
 DEFAULT_UNSPLASH_SECRET_KEY = os.getenv("UNSPLASH_SECRET_KEY", "")

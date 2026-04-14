@@ -38,9 +38,8 @@ class UserSettings(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    groq_api_key = Column(String(500), nullable=True, default="")
     openai_api_key = Column(String(500), nullable=True, default="")
-    selected_llm_model = Column(String(100), nullable=True, default="groq/llama-3.3-70b-versatile")
+    selected_llm_model = Column(String(100), nullable=True, default="openai/gpt-4o-mini")
     pexels_api_key = Column(String(500), nullable=True, default="")
     unsplash_access_key = Column(String(500), nullable=True, default="")
     unsplash_secret_key = Column(String(500), nullable=True, default="")

@@ -18,7 +18,7 @@ I have performed a thorough end-to-end audit, debugging, and validation on the A
 - Empty states are handled gracefully.
 
 ✅ **PPT Creation & Generation**:
-- **Groq AI Integration**: Successfully generating structured JSON for slide content based on prompt input.
+- **OpenAI Integration**: Successfully generating structured JSON for slide content based on prompt input.
 - Empty and excessively long prompts reject correctly.
 - Cleanly extracts structured responses from the LLM.
 

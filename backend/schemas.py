@@ -149,18 +149,16 @@ class UpdatePresentationRequest(BaseModel):
 
 # ─── Settings Schemas ─────────────────────────────────────────
 class SettingsRequest(BaseModel):
-    groq_api_key: Optional[str] = ""
     openai_api_key: Optional[str] = ""
-    selected_llm_model: Optional[str] = "groq/llama-3.3-70b-versatile"
+    selected_llm_model: Optional[str] = "openai/gpt-4o-mini"
     pexels_api_key: Optional[str] = ""
     unsplash_access_key: Optional[str] = ""
     unsplash_secret_key: Optional[str] = ""
 
 
 class SettingsResponse(BaseModel):
-    groq_api_key: str = ""
     openai_api_key: str = ""
-    selected_llm_model: str = "groq/llama-3.3-70b-versatile"
+    selected_llm_model: str = "openai/gpt-4o-mini"
     pexels_api_key: str = ""
     unsplash_access_key: str = ""
     unsplash_secret_key: str = ""
